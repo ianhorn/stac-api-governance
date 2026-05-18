@@ -34,6 +34,8 @@ with httpx.Client(timeout=60) as client:
                 json.dump(item, f, indent=2)
 
             count += 1
+
+
             print(f"Saved: {out_file.name}")
 
         # Find next page

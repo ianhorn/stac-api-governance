@@ -7,7 +7,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from constants import COLLECTION
 
-collection = 'dem-phase1' 
+collection = 'dem-phase3' 
 p = Path(f'C:/Users/Ian.Horn/Documents/stac-repos/items/{collection}')
 
 glob_list = list(p.glob('*.json'))
@@ -17,8 +17,6 @@ def rename_asset(file):
 
     with open(file, encoding="utf-8") as f:
         data = json.load(f)
-
-    data["stac_version"] = "1.0.0"
 
     # remove eo extension
     data["stac_extensions"] = [
@@ -41,21 +39,32 @@ def rename_asset(file):
 
     # thumbnail second
     if "thumbnail" in assets:
-        new_assets["thumbnail"] = assets["thumbnail"]
-        # update thumbnail path
-        old_href = new_assets["thumbnail"]["href"]
+        old_href = assets["thumbnail"]["href"]
         filename = Path(old_href).name
-        new_assets["thumbnail"]["href"] = (
+
+    else:
+        # derive thumbnail filename from data asset
+        data_href = new_assets["data"]["href"]
+        filename = Path(data_href).with_suffix(".png").name
+
+    new_assets["thumbnail"] = {
+        "href": (
             f"https://kyfromabove-stac.s3.us-west-2.amazonaws.com/"
             f"collections/{collection}/thumbnails/{filename}"
-        )
+        ),
+        "type": "image/png",
+        "roles": ["thumbnail"],
+        "title": "thumbnail"
+    }
 
-    # metadata/worldfile third
-    if "metadata" in assets:
-        new_assets["worldfile"] = assets["metadata"]
-    elif "worldfile" in assets:
-        new_assets["worldfile"] = assets["worldfile"]
+    data_href = new_assets["data"]["href"]
 
+    new_assets["worldfile"] = {
+        "href": data_href.replace(".tif", ".tfw"),
+        "type": "text/plain",
+        "roles": ["metadata", "worldfile"],
+        "title": "world file"
+}
     # preserve any additional assets after the main three
     for k, v in assets.items():
         if k not in {
