@@ -7,7 +7,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from constants import COLLECTION
 
-collection = 'dem-phase1' 
+collection = 'laz-phase3' 
 p = Path(f'C:/Users/Ian.Horn/Documents/stac-repos/items/{collection}')
 
 glob_list = list(p.glob('*.json'))
@@ -18,45 +18,58 @@ def rename_asset(file):
     with open(file, encoding="utf-8") as f:
         data = json.load(f)
 
-    # remove eo extension
-    data["stac_extensions"] = [
-        ext for ext in data.get("stac_extensions", [])
-        if ext != "https://stac-extensions.github.io/eo/v1.1.0/schema.json"
-    ]
+    data["stac_version"] = "1.1.0"
 
     # clear links
     data["links"] = []
 
     assets = data.get("assets", {})
-
     new_assets = {}
 
-    # asset/data first
-    if "asset" in assets:
-        new_assets["data"] = assets["asset"]
+    # --- DATA ---
+    if "pointcloud" in assets:
+        new_assets["data"] = {
+            **assets["pointcloud"],
+            "type": "application/vnd.laszip+copc",
+            "title": "copc data",
+            "roles": ["data"]
+        }
+
     elif "data" in assets:
-        new_assets["data"] = assets["data"]
+        new_assets["data"] = {
+            **assets["data"],
+            "type": "application/vnd.laszip+copc",
+            "title": "copc data",
+            "roles": ["data"]
+        }
+    else:
+        raise KeyError(f"No pointcloud/data asset found in {file}")
+    
+    # remove legacy/duplicate assets
+    assets.pop("pointcloud", None)
+    assets.pop("asset", None)
 
     # thumbnail second
     if "thumbnail" in assets:
-        new_assets["thumbnail"] = assets["thumbnail"]
-        # update thumbnail path
-        old_href = new_assets["thumbnail"]["href"]
+        old_href = assets["thumbnail"]["href"]
         filename = Path(old_href).name
-        new_assets["thumbnail"]["href"] = (
-            f"https://kyfromabove-stac.s3.us-west-2.amazonaws.com/"
-            f"collections/{collection}/thumbnails/{filename}"
-        )
 
-    # metadata/worldfile third
-    new_assets["worldfile"] = {
+    else:
+        # derive thumbnail filename from data asset
+        data_href = new_assets["data"]["href"]
+        filename = Path(data_href).with_suffix(".png").name
+
+    new_assets["thumbnail"] = {
         "href": (
             f"https://kyfromabove-stac.s3.us-west-2.amazonaws.com/"
-            f"collections/{collection}/worldfiles/{file.stem}.tfw"),
-        "type": "text/plain",
-        "roles": ["metadata", "worldfile"],
-        "title": "world file"
+            f"collections/{collection}/thumbnails/{filename}"
+        ),
+        "type": "image/png",
+        "roles": ["thumbnail"],
+        "title": "thumbnail"
     }
+
+    data_href = new_assets["data"]["href"]
 
     # preserve any additional assets after the main three
     for k, v in assets.items():

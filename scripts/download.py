@@ -3,7 +3,7 @@ from pathlib import Path
 
 import httpx
 
-output_dir = Path('dem-phase1')
+output_dir = Path('laz-phase3')
 
 BASE_URL = f'https://spved5ihrl.execute-api.us-west-2.amazonaws.com/collections/{output_dir}/items'
 

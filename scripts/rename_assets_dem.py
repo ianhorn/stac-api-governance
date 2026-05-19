@@ -7,7 +7,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from constants import COLLECTION
 
-collection = 'dem-phase3' 
+collection = 'dem-phase1' 
 p = Path(f'C:/Users/Ian.Horn/Documents/stac-repos/items/{collection}')
 
 glob_list = list(p.glob('*.json'))
@@ -17,6 +17,8 @@ def rename_asset(file):
 
     with open(file, encoding="utf-8") as f:
         data = json.load(f)
+
+    data["stac_version"] = "1.0.0"
 
     # remove eo extension
     data["stac_extensions"] = [
