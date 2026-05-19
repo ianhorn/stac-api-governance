@@ -8,7 +8,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 api_url = "https://drwgni8q1h.execute-api.us-west-2.amazonaws.com/"
-collection = "dem-phase3"
+collection = "dem-phase2"
 
 url = f"{api_url}collections/{collection}/items"
 num_workers = 28
