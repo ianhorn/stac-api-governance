@@ -7,7 +7,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 # from constants import COLLECTION
 
-collection = 'laz-phase3' 
+collection = 'laz-phase1' 
 p = Path(f'C:/Users/Ian.Horn/Documents/stac-repos/items/{collection}')
 
 glob_list = list(p.glob('*.json'))
@@ -33,11 +33,9 @@ def rename_asset(file):
             assets["data"]["type"] = "application/vnd.laszip+copc"
 
     if 'thumbnail' in assets:
-        None
-    else:
+    
         data['assets']['thumbnail'] = {
-            "href": f'https://kyfromabove-stac/items/thumbnails/{collection}/{file_base}_Intensity_Phase3.png',
-            "type": "image/png",
+            "href": f'https://kyfromabove-stac/collections/{collection}/thumbnails/{file_base}.png',
             "roles": ["thumbnail"],
             "title": 'Thumbnail'
         }
